@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>imsi magazine</title>
+  <meta name="description" content="imsi magazine — Japanese music & screen culture, for listeners in Korea.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header" id="header">
+    <a class="logo" href="#/">imsi magazine</a>
+    <nav class="header-right">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="ko">KR</button><span>/</span><button type="button" data-lang="en">EN</button>
+      </div>
+      <button type="button" class="menu-btn" id="menuBtn" data-i18n="menu">Menu</button>
+    </nav>
+  </header>
+
+  <div class="menu-overlay" id="menu" hidden>
+    <button type="button" class="menu-close" id="menuClose" aria-label="Close">×</button>
+    <ul class="menu-list" id="menuList"></ul>
+    <p class="menu-foot">imsi magazine — test channel for Hydra newsroom</p>
+  </div>
+
+  <main id="app" aria-live="polite"></main>
+
+  <footer class="site-footer">
+    <div class="logo small">imsi magazine</div>
+    <p data-i18n="footer">Hydra 뉴스룸 테스트용 임시 매거진입니다.</p>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="assets/sample.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
