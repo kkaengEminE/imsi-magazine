@@ -159,8 +159,7 @@
   async function render() {
     const hash = location.hash.replace(/^#/, "") || "/";
     const parts = hash.split("/").filter(Boolean).map(decodeURIComponent);
-    closeMenu();
-    applyStatic();
+    applyStatic(parts[0] === "c" ? parts[1] : null);
     app.innerHTML = `<div class="empty">${t("loading")}</div>`;
 
     let list;
@@ -195,13 +194,13 @@
     window.scrollTo(0, 0);
   }
 
-  // ── chrome: header, menu, lang ──
-  function applyStatic() {
+  // ── chrome: header(섹션 메뉴 + 언어) ──
+  function applyStatic(activeCat) {
     document.documentElement.lang = lang;
     document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll(".lang button").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
-    document.getElementById("menuList").innerHTML = CATEGORIES.map((c) =>
-      `<li><a href="#/c/${c.key}">${esc(c[lang])} <small>${esc(lang === "ko" ? c.en : c.ko)}</small></a></li>`).join("");
+    document.getElementById("catNav").innerHTML = CATEGORIES.map((c) =>
+      `<a href="#/c/${c.key}"${c.key === activeCat ? ' class="active" aria-current="page"' : ""}>${esc(c[lang])}</a>`).join("");
     let banner = document.querySelector(".demo-banner");
     if (DEMO) {
       if (!banner) { banner = document.createElement("div"); banner.className = "demo-banner"; document.body.appendChild(banner); }
@@ -213,11 +212,6 @@
     header.classList.toggle("on-hero", overHero);
     header.classList.toggle("solid", !overHero);
   }
-  const menu = document.getElementById("menu");
-  function closeMenu() { menu.hidden = true; document.body.style.overflow = ""; }
-  document.getElementById("menuBtn").addEventListener("click", () => { menu.hidden = false; document.body.style.overflow = "hidden"; });
-  document.getElementById("menuClose").addEventListener("click", closeMenu);
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   document.querySelectorAll(".lang button").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.lang === lang) return;
     lang = b.dataset.lang; saveLang(lang); render();

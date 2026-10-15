@@ -32,30 +32,21 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .site-header.solid { background: rgba(255,255,255,.96); color: var(--ink); border-bottom: 1px solid var(--line); }
 .site-header.on-hero { color: #fff; }
-.logo { font-weight: 800; font-size: 20px; letter-spacing: -0.03em; text-transform: lowercase; }
+.site-header { gap: 28px; }
+.logo { font-weight: 800; font-size: 20px; letter-spacing: -0.03em; text-transform: lowercase; white-space: nowrap; }
 .logo.small { font-size: 16px; }
-.header-right { display: flex; gap: 22px; align-items: center; font-size: 14px; font-weight: 500; }
-.lang { display: flex; gap: 6px; align-items: center; }
+
+/* 상단 섹션 메뉴 — 바로 접근(오버레이 없음) */
+.cat-nav { flex: 1; display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.cat-nav::-webkit-scrollbar { display: none; }
+.cat-nav a { padding: 2px 0; border-bottom: 1.5px solid transparent; opacity: .75; }
+.cat-nav a:hover { opacity: 1; }
+.cat-nav a.active { opacity: 1; border-bottom-color: currentColor; }
+
+.lang { display: flex; gap: 6px; align-items: center; font-size: 14px; font-weight: 500; white-space: nowrap; }
 .lang button { opacity: .45; }
 .lang button.active { opacity: 1; }
 .lang span { opacity: .35; }
-
-/* ── Menu overlay ─────────────────────────── */
-.menu-overlay {
-  position: fixed; inset: 0; z-index: 30; background: var(--ink); color: #fff;
-  padding: 90px var(--gutter) 40px; display: flex; flex-direction: column; justify-content: space-between;
-}
-.menu-overlay[hidden] { display: none; }
-.menu-close { position: absolute; top: 14px; right: var(--gutter); font-size: 34px; line-height: 1; }
-.menu-list { list-style: none; margin: 0; padding: 0; }
-.menu-list a {
-  display: flex; align-items: baseline; gap: 16px;
-  font-size: clamp(34px, 7vw, 76px); font-weight: 700; letter-spacing: -0.04em; line-height: 1.08;
-  text-transform: uppercase;
-}
-.menu-list a small { font-size: 14px; font-weight: 500; letter-spacing: 0; opacity: .5; text-transform: none; }
-.menu-list a:hover { opacity: .6; }
-.menu-foot { font-size: 13px; opacity: .5; margin: 0; }
 
 /* ── Common ───────────────────────────────── */
 .wrap { padding: 0 var(--gutter); }
@@ -148,9 +139,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .article-top { grid-template-columns: 1fr; padding-top: 96px; }
   .article-figure { order: -1; }
 }
+@media (max-width: 760px) {
+  .site-header { flex-wrap: wrap; row-gap: 10px; padding-top: 14px; padding-bottom: 10px; }
+  .cat-nav { order: 3; flex-basis: 100%; gap: 18px; font-size: 13px; }
+}
 @media (max-width: 600px) {
   .grid { grid-template-columns: 1fr; }
-  .header-right { gap: 14px; }
   .hero-body { bottom: 16vh; }
   .article-body figure { margin: 2em 0; }
   .article-body figcaption { padding: 0; }

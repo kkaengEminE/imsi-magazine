@@ -14,19 +14,11 @@
 <body>
   <header class="site-header" id="header">
     <a class="logo" href="#/">imsi magazine</a>
-    <nav class="header-right">
-      <div class="lang" role="group" aria-label="Language">
-        <button type="button" data-lang="ko">KR</button><span>/</span><button type="button" data-lang="en">EN</button>
-      </div>
-      <button type="button" class="menu-btn" id="menuBtn" data-i18n="menu">Menu</button>
-    </nav>
+    <nav class="cat-nav" id="catNav" aria-label="Sections"></nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="ko">KR</button><span>/</span><button type="button" data-lang="en">EN</button>
+    </div>
   </header>
-
-  <div class="menu-overlay" id="menu" hidden>
-    <button type="button" class="menu-close" id="menuClose" aria-label="Close">×</button>
-    <ul class="menu-list" id="menuList"></ul>
-    <p class="menu-foot">imsi magazine — test channel for Hydra newsroom</p>
-  </div>
 
   <main id="app" aria-live="polite"></main>
 
