@@ -1,10 +1,10 @@
--- imsi magazine — Supabase 스키마
+-- imsi magazine — Supabase 스키마 (처음 만들 때: 이 파일 → migrations/002_cms.sql 순서로 실행)
 -- Supabase 대시보드 > SQL Editor 에 붙여넣고 Run.
 
 create table if not exists public.articles (
   id            uuid primary key default gen_random_uuid(),
   external_id   text not null unique,
-  status        text not null default 'published' check (status in ('published', 'draft')),
+  status        text not null default 'published' check (status in ('draft', 'published', 'pending')),
   language      text not null default 'ko',
   title         text not null,
   title_en      text,
@@ -17,6 +17,9 @@ create table if not exists public.articles (
   tags          text[] not null default '{}',
   source_name   text,
   source_url    text,
+  display_name  text,
+  editor_note   text,
+  updated_by    uuid references auth.users (id) on delete set null,
   published_at  timestamptz not null default now(),
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
@@ -32,4 +35,6 @@ alter table public.articles enable row level security;
 drop policy if exists "public read published" on public.articles;
 create policy "public read published" on public.articles
   for select to anon, authenticated
-  using (status = 'published');
+  using (status = 'published' and published_at <= now());
+
+-- CMS(편집자 표, 편집자 권한, updated_at 트리거)는 migrations/002_cms.sql 참고.

@@ -1,11 +1,12 @@
-// imsi magazine — External Publish API v1 수신 함수 (docs/PUBLISH_API.md)
-// Supabase 대시보드 > Edge Functions > Deploy a new function > 이름 "publish" 로 붙여넣기.
+// imsi magazine — External Publish API v1.1 수신 함수 (docs/PUBLISH_API.md)
+// 배포: Supabase 대시보드 > Edge Functions > "publish" 에 index.ts 와 logic.ts 두 파일을 올리거나,
+//       CLI 로 `supabase functions deploy publish --no-verify-jwt`.
 // Secrets 에 PUBLISH_API_KEY 등록. JWT 검증(Verify JWT)은 끈다 — 자체 키로 인증.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { articleUrl, buildRow, displayStatus, editedInCms, queueRange } from "./logic.ts";
 
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://kkaengemine.github.io/imsi-magazine/";
 const API_KEY = Deno.env.get("PUBLISH_API_KEY") ?? "";
-const CATEGORIES = ["music", "live", "screen", "anime", "korea"];
 
 const db = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -18,26 +19,37 @@ const json = (status: number, body: unknown) =>
     headers: { "content-type": "application/json; charset=utf-8" },
   });
 
-// 본문 정화 — 스크립트·스타일·iframe·이벤트 속성·javascript: 링크 제거.
-function sanitize(html: string): string {
-  return html
-    .replace(/<(script|style|iframe|object|embed|form)[\s\S]*?<\/\1>/gi, "")
-    .replace(/<(script|style|iframe|object|embed|form|link|meta)\b[^>]*\/?>/gi, "")
-    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/(href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '$1="#"');
-}
-
-function articleUrl(id: string) {
-  return `${SITE_URL.replace(/\/?$/, "/")}#/a/${id}`;
-}
-
 Deno.serve(async (req) => {
   if (!API_KEY) return json(500, { error: "PUBLISH_API_KEY not configured" });
   const auth = req.headers.get("authorization") ?? "";
   if (auth !== `Bearer ${API_KEY}`) return json(401, { error: "invalid api key" });
 
+  const url = new URL(req.url);
+  const now = new Date();
+
+  // 예약·초안 목록: GET ?list=queue&from=&to=
+  if (req.method === "GET" && url.searchParams.get("list") === "queue") {
+    const range = queueRange(url.searchParams, now);
+    if ("error" in range) return json(400, range);
+
+    const cols = "id, external_id, title, status, published_at, display_name, updated_at";
+    const [scheduled, waiting] = await Promise.all([
+      db.from("articles").select(cols).eq("status", "published")
+        .gt("published_at", range.from).lte("published_at", range.to).order("published_at"),
+      db.from("articles").select(cols).in("status", ["draft", "pending"]).order("updated_at", { ascending: false }).limit(200),
+    ]);
+    if (scheduled.error) return json(500, { error: scheduled.error.message });
+    if (waiting.error) return json(500, { error: waiting.error.message });
+
+    const items = [...(scheduled.data ?? []), ...(waiting.data ?? [])].map((a) => ({
+      ...a,
+      state: displayStatus(a.status, a.published_at, now),
+    }));
+    return json(200, { from: range.from, to: range.to, items });
+  }
+
   if (req.method === "DELETE") {
-    const externalId = new URL(req.url).searchParams.get("external_id");
+    const externalId = url.searchParams.get("external_id");
     if (!externalId) return json(400, { error: "external_id required" });
     const { data, error } = await db.from("articles").delete().eq("external_id", externalId).select("id");
     if (error) return json(500, { error: error.message });
@@ -53,45 +65,27 @@ Deno.serve(async (req) => {
     return json(400, { error: "invalid json" });
   }
 
-  const str = (k: string) => (typeof p[k] === "string" && (p[k] as string).trim() !== "" ? (p[k] as string).trim() : null);
-  const externalId = str("external_id");
-  const title = str("title");
-  const body = str("body_html");
-  if (!externalId || !title || !body) {
-    return json(400, { error: "external_id, title, body_html are required" });
+  const built = buildRow(p, now);
+  if (built.error || !built.row) return json(400, { error: built.error });
+  const row = built.row;
+
+  const existing = await db.from("articles").select("id, updated_by").eq("external_id", row.external_id).maybeSingle();
+  if (existing.error) return json(500, { error: existing.error.message });
+  if (editedInCms(existing.data)) {
+    return json(409, { error: "edited in CMS — not overwritten", id: existing.data!.id, url: articleUrl(SITE_URL, existing.data!.id) });
   }
-
-  const status = p.status === "draft" ? "draft" : "published";
-  const category = str("category");
-  const tags = Array.isArray(p.tags) ? (p.tags as unknown[]).filter((t) => typeof t === "string" && t.trim()).map((t) => (t as string).trim()).slice(0, 20) : [];
-  const source = (p.source ?? {}) as Record<string, unknown>;
-  const publishedAt = str("published_at");
-
-  const row = {
-    external_id: externalId,
-    status,
-    language: str("language") ?? "ko",
-    title,
-    title_en: str("title_en"),
-    summary: str("summary"),
-    body_html: sanitize(body),
-    body_html_en: str("body_html_en") ? sanitize(str("body_html_en")!) : null,
-    thumbnail_url: str("thumbnail_url"),
-    thumbnail_alt: str("thumbnail_alt"),
-    category: category && CATEGORIES.includes(category) ? category : null,
-    tags,
-    source_name: typeof source.name === "string" ? source.name : null,
-    source_url: typeof source.url === "string" ? source.url : null,
-    published_at: publishedAt && !isNaN(Date.parse(publishedAt)) ? publishedAt : new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
 
   const { data, error } = await db
     .from("articles")
     .upsert(row, { onConflict: "external_id" })
-    .select("id, status")
+    .select("id, status, published_at")
     .single();
   if (error) return json(500, { error: error.message });
 
-  return json(200, { id: data.id, url: articleUrl(data.id), status: data.status });
+  return json(200, {
+    id: data.id,
+    url: articleUrl(SITE_URL, data.id),
+    status: displayStatus(data.status, data.published_at, now),
+    published_at: data.published_at,
+  });
 });

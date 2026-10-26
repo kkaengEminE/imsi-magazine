@@ -71,7 +71,9 @@
     if (DEMO) {
       articles = window.IMSI_SAMPLE.slice();
     } else {
-      const url = `${cfg.SUPABASE_URL.replace(/\/$/, "")}/rest/v1/articles?select=*&status=eq.published&order=published_at.desc&limit=300`;
+      // 예약 기사(발행 시각이 미래)는 시간이 될 때까지 숨긴다. DB 권한에서도 같은 조건으로 막는다.
+      const nowIso = encodeURIComponent(new Date().toISOString());
+      const url = `${cfg.SUPABASE_URL.replace(/\/$/, "")}/rest/v1/articles?select=*&status=eq.published&published_at=lte.${nowIso}&order=published_at.desc&limit=300`;
       const res = await fetch(url, { headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: `Bearer ${cfg.SUPABASE_ANON_KEY}` } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       articles = await res.json();
