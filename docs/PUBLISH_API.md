@@ -48,7 +48,7 @@ Content-Type: application/json
 | `external_id` | ✓ | 보내는 쪽 기사 ID. 갱신·삭제의 기준 |
 | `title` | ✓ | 제목 |
 | `body_html` | ✓ | 본문 HTML. `<p> <h2> <h3> <blockquote> <ul> <ol> <li> <figure> <img> <figcaption> <a> <strong> <em> <br>` 만 쓰는 것을 권장 |
-| `status` |  | `published`(기본), `draft`(저장만, 비공개), `pending`(보류, 비공개) |
+| `status` |  | `published`(기본), `draft`(초안, 저장만), `pending`(비공개) |
 | `display_name` |  | 기자명 |
 | `language` |  | 본문 언어. ISO 639-1 (`ko`, `en`, `ja`) |
 | `title_en`, `body_html_en` |  | 영문판이 있을 때 |
@@ -73,7 +73,7 @@ Hydra 는 `id` 와 `url` 을 저장해 두고 발행 이력에 링크로 보여�
 
 ## 2. 예약·초안 목록 — `GET {endpoint}?list=queue&from=<ISO>&to=<ISO>`
 
-`from`~`to` 사이 예약 기사(기본: 지금부터 3일)와 초안·보류 기사(최근 200건)를 돌려준다. 보내는 쪽이
+`from`~`to` 사이 예약 기사(기본: 지금부터 3일)와 초안·비공개 기사(최근 200건)를 돌려준다. 보내는 쪽이
 빈 시간대를 고를 때 쓴다.
 
 ```json

@@ -9,17 +9,29 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-  <link rel="stylesheet" href="assets/admin.css?v=202610231800">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+  <link rel="stylesheet" href="assets/admin.css?v=202610271200">
 </head>
 <body>
   <header class="cms-header">
     <a class="logo" href="#/">imsi magazine <span>CMS</span></a>
+    <nav class="cms-nav" id="nav" aria-label="CMS 메뉴"></nav>
     <div class="cms-user" id="user"></div>
   </header>
+  <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
   <main id="cms" class="cms-main" aria-live="polite"></main>
 
-  <script src="config.js?v=202610231800"></script>
+  <script src="config.js?v=202610271200"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="assets/admin.js?v=202610231800"></script>
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+  <script src="assets/cms/core.js?v=202610271200"></script>
+  <script src="assets/cms/list.js?v=202610271200"></script>
+  <script src="assets/cms/edit.js?v=202610271200"></script>
+  <script src="assets/cms/schedule.js?v=202610271200"></script>
+  <script src="assets/cms/accounts.js?v=202610271200"></script>
+  <script src="assets/cms/settings.js?v=202610271200"></script>
+  <script src="assets/cms/log.js?v=202610271200"></script>
+  <script src="assets/cms/profile.js?v=202610271200"></script>
+  <script>window.CMS && !window.CMS.broken && window.CMS.start();</script>
 </body>
 </html>

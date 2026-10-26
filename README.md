@@ -10,23 +10,14 @@ Hydra 뉴스룸 발행 테스트용 임시 매거진. 정적 사이트(GitHub Pa
 
 로컬 확인: `python3 -m http.server 8765` 후 http://127.0.0.1:8765
 
-## CMS (초안·예약·발행·보류)
+## CMS
 
-- 화면: `admin.html` (예: https://kkaengemine.github.io/imsi-magazine/admin.html)
-- 상태: `draft` 초안 / `published` 발행 (발행 시각이 미래면 **예약** — 그 시각이 되면 사이트에 자동 공개) / `pending` 보류
-- 시간대 캘린더: 오늘·내일 08:00~23:30, 정각·30분 슬롯
-- 편집자가 CMS 에서 고친 기사는 보내는 쪽(Hydra·Nessus)이 다시 보내도 덮어쓰지 않는다(`409`).
-
-### 처음 설정
-
-1. Supabase SQL Editor 에서 `supabase/migrations/002_cms.sql` 실행
-2. Authentication > Users 에서 편집자 계정 생성
-3. 파일 맨 아래 주석의 편집자 등록 SQL 실행 (이메일·표시 이름 바꿔서)
-4. 받는 함수 수정본 배포: Edge Functions > `publish` 에 `index.ts`, `logic.ts` 두 파일
-   (또는 CLI `supabase functions deploy publish --no-verify-jwt`)
+- 화면: `admin.html` (https://kkaengemine.github.io/imsi-magazine/admin.html)
+- 용어·권한(어드민·에디터)·화면·처음 설정 순서: [`docs/CMS.md`](docs/CMS.md)
+- 상태: 초안 / 예약 / 발행 / 비공개 / 삭제. 직접 쓴 글과 외부 API 글이 같은 기사함에 쌓인다.
 
 ### 테스트
 
 ```bash
-node --test --experimental-strip-types tests/publish_logic.test.ts
+node --test --experimental-strip-types tests/publish_logic.test.ts tests/admin_users_logic.test.ts
 ```

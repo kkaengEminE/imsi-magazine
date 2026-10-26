@@ -2,7 +2,8 @@
   "use strict";
 
   // ── 카테고리(메뉴) — 태그로도 자동 분류. 서비스명 'imsi magazine' 은 번역하지 않음 ──
-  const CATEGORIES = [
+  // CMS 설정(site_settings.categories)이 있으면 그 목록·이름을 쓰고, 자동 분류 단어(match)는 아래 기본값에서 가져온다.
+  let CATEGORIES = [
     { key: "new", ko: "새 소식", en: "New" },
     { key: "music", ko: "음악", en: "Music", match: ["music", "album", "single", "mv", "chart", "record", "release", "음악", "앨범", "신곡", "차트"] },
     { key: "live", ko: "공연·투어", en: "Live & Tour", match: ["live", "tour", "concert", "festival", "fes", "공연", "투어", "페스티벌", "내한"] },
@@ -35,6 +36,7 @@
 
   let lang = readLang();
   let articles = null; // 최신순
+  let featuredId = null; // CMS 설정의 메인 고정 기사
   const app = document.getElementById("app");
   const header = document.getElementById("header");
 
@@ -77,10 +79,33 @@
       const res = await fetch(url, { headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: `Bearer ${cfg.SUPABASE_ANON_KEY}` } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       articles = await res.json();
+      await loadSettings();
     }
     articles.forEach((a) => { a._cat = categoryOf(a); a.tags = a.tags || []; });
     articles.sort((x, y) => new Date(y.published_at) - new Date(x.published_at));
+    // 메인 고정 기사가 공개 중이면 맨 앞으로 (첫 화면 큰 기사)
+    const pinned = featuredId && articles.findIndex((a) => a.id === featuredId);
+    if (pinned > 0) articles.unshift(articles.splice(pinned, 1)[0]);
     return articles;
+  }
+
+  // CMS 설정(카테고리·메인 고정 기사). 없거나 실패하면 기본값 그대로.
+  async function loadSettings() {
+    try {
+      const url = `${cfg.SUPABASE_URL.replace(/\/$/, "")}/rest/v1/site_settings?select=key,value&key=in.(categories,featured_article_id)`;
+      const res = await fetch(url, { headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: `Bearer ${cfg.SUPABASE_ANON_KEY}` } });
+      if (!res.ok) return;
+      const rows = await res.json();
+      const get = (k) => (rows.find((r) => r.key === k) || {}).value;
+      const cats = get("categories");
+      if (Array.isArray(cats) && cats.length) {
+        const defaults = Object.fromEntries(CATEGORIES.map((c) => [c.key, c]));
+        CATEGORIES = [defaults.new, ...cats.filter((c) => c && c.key && c.key !== "new").map((c) => ({
+          key: c.key, ko: c.ko || c.key, en: c.en || c.ko || c.key, match: (defaults[c.key] && defaults[c.key].match) || [c.key],
+        }))];
+      }
+      featuredId = typeof get("featured_article_id") === "string" ? get("featured_article_id") : null;
+    } catch (_) { /* 설정 없이도 사이트는 동작 */ }
   }
 
   // ── views ──
@@ -171,6 +196,7 @@
       return;
     }
 
+    applyStatic(parts[0] === "c" ? parts[1] : null); // 설정의 카테고리 이름 반영
     let isHome = false;
     if (parts[0] === "a") {
       const a = list.find((x) => String(x.id) === parts[1]);

@@ -52,3 +52,9 @@ test("queue range defaults to 3 days", () => {
   assert.equal(r.to, "2026-10-26T03:00:00.000Z");
   assert.ok("error" in queueRange(new URLSearchParams("from=x"), now));
 });
+
+test("API rows are marked as external and CMS-written rows are never overwritten", () => {
+  assert.equal(buildRow(base, now).row!.origin, "api");
+  assert.equal(editedInCms({ updated_by: null, origin: "cms" }), true);
+  assert.equal(editedInCms({ updated_by: null, origin: "api" }), false);
+});

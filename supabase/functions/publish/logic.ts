@@ -60,15 +60,16 @@ export function buildRow(p: Payload, now: Date): { row?: Record<string, unknown>
       source_name: typeof source.name === "string" ? source.name : null,
       source_url: typeof source.url === "string" ? source.url : null,
       display_name: str("display_name"),
+      origin: "api",
       published_at: publishedAt ?? now.toISOString(),
       updated_at: now.toISOString(),
     },
   };
 }
 
-// CMS 에서 편집자가 고친 기사는 보내는 쪽이 다시 보내도 덮어쓰지 않는다.
-export function editedInCms(existing: { updated_by?: string | null } | null): boolean {
-  return !!(existing && existing.updated_by);
+// CMS 에서 사람이 고쳤거나 CMS 에서 직접 쓴 기사는 보내는 쪽이 다시 보내도 덮어쓰지 않는다.
+export function editedInCms(existing: { updated_by?: string | null; origin?: string | null } | null): boolean {
+  return !!(existing && (existing.updated_by || existing.origin === "cms"));
 }
 
 // 예약·초안 목록 조회 범위 (기본: 지금부터 3일)

@@ -19,6 +19,14 @@ const json = (status: number, body: unknown) =>
     headers: { "content-type": "application/json; charset=utf-8" },
   });
 
+async function defaultOwner(): Promise<string | null> {
+  const { data } = await db.from("site_settings").select("value").eq("key", "api").maybeSingle();
+  const id = data?.value?.default_owner_id;
+  if (typeof id !== "string" || !id) return null;
+  const { data: ed } = await db.from("editors").select("user_id").eq("user_id", id).eq("active", true).maybeSingle();
+  return ed ? id : null;
+}
+
 Deno.serve(async (req) => {
   if (!API_KEY) return json(500, { error: "PUBLISH_API_KEY not configured" });
   const auth = req.headers.get("authorization") ?? "";
@@ -51,7 +59,8 @@ Deno.serve(async (req) => {
   if (req.method === "DELETE") {
     const externalId = url.searchParams.get("external_id");
     if (!externalId) return json(400, { error: "external_id required" });
-    const { data, error } = await db.from("articles").delete().eq("external_id", externalId).select("id");
+    // CMS 에서 직접 쓴 글은 외부 API 로 지울 수 없다.
+    const { data, error } = await db.from("articles").delete().eq("external_id", externalId).eq("origin", "api").select("id");
     if (error) return json(500, { error: error.message });
     return data && data.length ? json(200, { deleted: true }) : json(404, { error: "not found" });
   }
@@ -69,10 +78,16 @@ Deno.serve(async (req) => {
   if (built.error || !built.row) return json(400, { error: built.error });
   const row = built.row;
 
-  const existing = await db.from("articles").select("id, updated_by").eq("external_id", row.external_id).maybeSingle();
+  const existing = await db.from("articles").select("id, updated_by, origin").eq("external_id", row.external_id).maybeSingle();
   if (existing.error) return json(500, { error: existing.error.message });
   if (editedInCms(existing.data)) {
     return json(409, { error: "edited in CMS — not overwritten", id: existing.data!.id, url: articleUrl(SITE_URL, existing.data!.id) });
+  }
+
+  // 새로 들어온 글: 설정의 기본 담당자(에디터)가 있으면 그 사람 글로 둔다. 없으면 어드민만 관리.
+  if (!existing.data) {
+    const owner = await defaultOwner();
+    if (owner) row.author_id = owner;
   }
 
   const { data, error } = await db
