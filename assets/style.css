@@ -151,3 +151,27 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .article-body figcaption { padding: 0; }
   .site-footer { flex-direction: column; align-items: start; }
 }
+
+/* ── Print ────────────────────────────────── */
+/* 글꼴·글자 크기는 바꾸지 않는다(브라우저·사용자 설정에 맡김). 화면용 요소만 정리한다. */
+@media print {
+  /* 머리말: 첫 쪽에 사이트 이름만 한 번 (고정 위치면 쪽마다 반복되며 본문을 가림) */
+  .site-header { position: static; padding: 0 0 12px; border-bottom: 1px solid var(--line); color: var(--ink); background: none; }
+  .cat-nav, .lang { display: none; }
+
+  /* 화면용 요소: 관련 기사(기사 바로 뒤 목록), 꼬리말, 알림 띠 */
+  article + .section, .site-footer, .demo-banner { display: none; }
+
+  /* 고정 머리말 자리로 비워 둔 위쪽 여백 없애기 */
+  .article-top { grid-template-columns: 1fr; padding-top: 16px; padding-bottom: 24px; }
+  .page-title { padding-top: 16px; }
+
+  /* 대표 이미지는 작게, 사진은 쪽 경계에서 잘리지 않게 */
+  .article-figure { background: none; }
+  .article-figure img { aspect-ratio: auto; max-height: 9cm; width: auto; max-width: 100%; }
+  img, figure { break-inside: avoid; }
+  h1, h2, h3, .article-body .label, .tags .label { break-after: avoid; }
+
+  /* 종이에서는 원문을 찾아갈 수 없으니 출처 링크 뒤에 주소를 찍는다 */
+  .source-line a[href]::after { content: " (" attr(href) ")"; word-break: break-all; }
+}
